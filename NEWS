@@ -1,3 +1,12 @@
+Version 2.0
+===========
+
+* 2016-11-09
+ - added following functions: norm(), trapz(), normalise(), cumsum(),
+   cumprod(), multv(), divv(), addv(), subv(), diff()
+ - functions admitting or requiring additional arguments can be served
+   via named arguments in '...'.
+
 Version 1.0
 ===========
 
