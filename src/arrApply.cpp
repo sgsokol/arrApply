@@ -6,7 +6,7 @@ using namespace arma;
 using namespace Rcpp;
 
 // define integers for function names
-enum array_act { a_sum, a_prod, a_all, a_any, a_min, a_max, a_mean, a_median, a_sd, a_var, a_norm, a_normalise, a_cumsum, a_cumprod, a_diff};
+enum array_act { a_sum, a_prod, a_all, a_any, a_min, a_max, a_mean, a_median, a_sd, a_var, a_norm, a_trapz, a_normalise, a_cumsum, a_cumprod, a_multv, a_divv, a_addv, a_subv, a_diff };
 
 // result of a call on a vector is a real scalar
 #define make_call(act) \
@@ -56,11 +56,16 @@ case a_##act: \
 //' and vector reducing functions (like diff() that produce a vector of
 //' different length compared to the length of an input vector).
 //' 
-//' The following functions can be used in argument fun (brackets
-//' [] indicate optional parameters that can be passed in '...'):
+//' The following functions can be used as argument 'fun' (brackets
+//' [] indicate additional parameters that can be passed in '...'):
 //'  - reducing functions: sum(), prod(), all(), any(), min(), max(),
-//'    mean(), median(), sd() [norm_type], var() [norm_type], norm() [p].
-//'  - mapping functions: normalise() [p], cumsum(), cumprod()
+//'    mean(), median(), sd() [norm_type], var() [norm_type], norm() [p],
+//'    trapz() [x] (trapezoidal integration with respect to spacing in x,
+//'    if x is provided, otherwise unit spacing is used);
+//'  - mapping functions: normalise() [p], cumsum(), cumprod(), multv() [v]
+//'    (multiply a given dimension by a vector v, term by term), divv() [v]
+//'    (divide by a vector v), addv() [v] (add a vector v), subv() [v] (subtract
+//'    a vector v);
 //'  - vector reducing function: diff() [k].
 //' 
 //' RcppArmadillo is used to do the job very quickly but it commes at price
@@ -72,14 +77,18 @@ case a_##act: \
 //' @param arr numeric array of arbitrary dimension
 //' @param idim integer, dimension number along which a function must be applied
 //' @param fun character string, function name to be applied
-//' @param ... optional named parameters. Actually, they can be helpful for
-//'    following functions:
+//' @param ... additional named parameters. Optional parameters can be helpful for
+//'    the following functions:
 //'       sd(), var() [norm_type: 0 normalisation using N-1 entries (default);
 //'          1 normalisation using N entries];
 //'       norm() [p: integer >= 1 (default=2) or one of "-inf", "inf", "fro".]
 //'       normalise() [p: integer >= 1, default=2]
 //'       diff() [k: integer >= 1 (default=1) number of recursive application of diff().
 //'          The size of idim-th dimension will be reduced by k.]
+//'       trapz() [x: numerical vector of the same length as idim-th size of arr]
+//'    Mandatory parameter:
+//'       multv(), divv(), addv(), subv() [v: numerical vector of the same
+//'          length as idim-th size of arr]
 //'
 //' @return output array of dimension cut by 1 (the idim-th dimension
 //'    will disappear for reducing functions) or of the same dimension
@@ -104,10 +113,10 @@ case a_##act: \
 //' @export
 // [[Rcpp::export]]
 SEXP arrApply(NumericVector arr, int idim=1, std::string fun="sum", List dots=R_NilValue) {
-    
     std::map<std::string, array_act> mapf;
     #define add_map(act) mapf[#act]=a_##act
     // populate the mapf
+    // reducing functions
     add_map(sum);
     add_map(prod);
     add_map(all);
@@ -119,20 +128,31 @@ SEXP arrApply(NumericVector arr, int idim=1, std::string fun="sum", List dots=R_
     add_map(sd);
     add_map(var);
     add_map(norm);
+    add_map(trapz);
+    // mapping functions
     add_map(normalise);
     add_map(cumsum);
     add_map(cumprod);
+    add_map(multv);
+    add_map(divv);
+    add_map(addv);
+    add_map(subv);
+    // vector reducing functions
     add_map(diff);
+    
     array_act aact=mapf[fun];
-    std::vector<array_act> mvact={a_normalise, a_cumsum, a_cumprod, a_diff}; // mapping or vector reducing acts
+    std::vector<array_act> mvact={a_normalise, a_cumsum, a_cumprod, a_multv, a_divv, a_addv, a_subv, a_diff}; // mapping or vector reducing acts
     bool mv_res=std::find(mvact.begin(), mvact.end(), aact) != mvact.end();
     uvec d;
     char buf[512];
     // optional parameters
     unsigned int p=2, norm_type=0, k=1;
     std::string pch="";
+    vec x;
+    // mandatory parameter
+    rowvec rowv;
     // auxiliary variables
-    bool p_is_int=true;
+    bool p_is_int=true, use_x=false;
     RObject robj;
     double pr;
     
@@ -140,8 +160,8 @@ SEXP arrApply(NumericVector arr, int idim=1, std::string fun="sum", List dots=R_
         sprintf(buf, "arrApply: fun='%s' is not in the list of applicable functions", fun.data());
         stop(buf);
     }
+    // get args from dots
     switch(aact) {
-        // have to process optional args
         case a_sd:
         case a_var:
             if (dots.containsElementNamed("norm_type")) {
@@ -197,6 +217,22 @@ SEXP arrApply(NumericVector arr, int idim=1, std::string fun="sum", List dots=R_
                     sprintf(buf, "arrApply: optional k must be an integer >= 1, instead got %d.", k);
                     stop(buf);
                 }
+            }
+        break;
+        case a_multv:
+        case a_divv:
+        case a_addv:
+        case a_subv:
+            if (dots.containsElementNamed("v")) {
+                rowv=as<rowvec>(dots["v"]);
+            } else {
+                sprintf(buf, "Parameter v is mandatory for %s() function", fun);
+            }
+        break;
+        case a_trapz:
+            if (dots.containsElementNamed("x")) {
+                x=as<vec>(dots["x"]);
+                use_x=true;
             }
         break;
     }
@@ -299,12 +335,57 @@ SEXP arrApply(NumericVector arr, int idim=1, std::string fun="sum", List dots=R_
               cres.set_size(dwork[0], dwork[1]-std::min(k, dwork[1]), dwork[2]);
 //Rprintf("d2\n");
 //Rcout << "c.r=" << cres.n_rows << "; c.c=" << cres.n_cols << "; c.s=" << cres.n_slices << std::endl;
+        {
             mat mtmp;
             for (std::size_t isl=0; isl < work.n_slices; ++isl) {
                 mtmp=diff(work.slice(isl), k, 1);
                 cres.slice(isl)=mtmp;
             }
-Rprintf("d3\n");
+        }
+//Rprintf("d3\n");
+        break;
+        case a_multv:
+        case a_divv:
+        case a_addv:
+        case a_subv:
+            cres=work;
+            if (rowv.size() == work.n_cols) {
+                switch (aact) {
+                case a_multv:
+                    for (std::size_t isl=0; isl < work.n_slices; ++isl)
+                        cres.slice(isl).each_row() %= rowv;
+                break;
+                case a_divv:
+                    for (std::size_t isl=0; isl < work.n_slices; ++isl)
+                        cres.slice(isl).each_row() /= rowv;
+                break;
+                case a_addv:
+                    for (std::size_t isl=0; isl < work.n_slices; ++isl)
+                        cres.slice(isl).each_row() += rowv;
+                break;
+                case a_subv:
+                    for (std::size_t isl=0; isl < work.n_slices; ++isl)
+                        cres.slice(isl).each_row() -= rowv;
+                break;
+                }
+            } else {
+                sprintf(buf, "arrApply: for multv(), length(v) (%d) must be equal to dim(arr)[idim] (%d).", rowv.size(), work.n_cols);
+                stop(buf);
+            }
+        break;
+        case a_trapz:
+            if (use_x) {
+                if (x.size() == work.n_cols) {
+                    for (std::size_t isl=0; isl < work.n_slices; ++isl)
+                        res(span::all,isl)=trapz(x, work.slice(isl), 1);
+                } else {
+                    sprintf(buf, "arrApply: for trapz(), length(x) (%d) must be equal to dim(arr)[idim] (%d).", x.size(), work.n_cols);
+                    stop(buf);
+                }
+            } else {
+                for (std::size_t isl=0; isl < work.n_slices; ++isl)
+                    res(span::all,isl)=trapz(work.slice(isl), 1);
+            }
         break;
     }
     // rechape back the result
