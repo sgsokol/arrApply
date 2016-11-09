@@ -67,7 +67,7 @@ case a_##act: \
 //'    (divide by a vector v), addv() [v] (add a vector v), subv() [v] (subtract
 //'    a vector v);
 //'  - vector reducing function: diff() [k].
-//' 
+//' \{}
 //' RcppArmadillo is used to do the job very quickly but it commes at price
 //' of not allowing NA in the input numeric array.
 //' Vectors are allowed at input. They are considered as arrays of dimension 1.
