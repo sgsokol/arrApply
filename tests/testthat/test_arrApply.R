@@ -2,17 +2,26 @@ context("Apply a function to a dimension of an array")
 # list of acts: (name: act for arrApply; value: if NULL, the same  act is for apply(),
 #   if list, its fields are: rf -> name for equivalent r function, args -> list
 #   of ... in apply(), argc -> ... for arrApply())
+set.seed(7)
+n=3
+v=rnorm(n)
+m=matrix(rnorm(n*n), n)
+d3=rep(n, 3)
+ar3d=array(rnorm(prod(d3)), dim=d3)
+d4=rep(n, 4)
+ar4d=array(rnorm(prod(d4)), dim=d4)
+vp=v
 lacts=list("sum"=NULL, "prod"=NULL, "all"=NULL, "any"=NULL, "min"=NULL, "max"=NULL, "mean"=NULL, "median"=NULL, "sd"=NULL, "var"=NULL, "cumsum"=NULL, "cumprod"=NULL, "diff"=NULL,
    # translated acts
    norm=list(rf="norm", argr=list(type='2'), argc=list(p=2)),
    trapz=list(rf=function(v) {n=length(v); return(sum(v)-0.5*(v[1]+v[n]))}),
    normalise=list(rf=function(v) v/norm(v, '2'), argc=list(p=2)),
-   multv=list(rf=function(v, vv) v*vv, argr=list(vv=v), argc=list(v=v)), 
-   divv=list(rf=function(v, vv) v/vv, argr=list(vv=v), argc=list(v=v)), 
-   addv=list(rf=function(v, vv) v+vv, argr=list(vv=v), argc=list(v=v)), 
-   subv=list(rf=function(v, vv) v-vv, argr=list(vv=v), argc=list(v=v))
+   multv=list(rf=function(v, vv) v*vv, argr=list(vv=vp), argc=list(v=vp)), 
+   divv=list(rf=function(v, vv) v/vv, argr=list(vv=vp), argc=list(v=vp)), 
+   addv=list(rf=function(v, vv) v+vv, argr=list(vv=vp), argc=list(v=vp)), 
+   subv=list(rf=function(v, vv) v-vv, argr=list(vv=vp), argc=list(v=vp))
 )
-test_ar=function(ar, tol=1.e-14, acts=lacts, ndi=seq_along(dim(ar)), v=v) {
+test_ar=function(ar, tol=1.e-14, acts=lacts, ndi=seq_along(dim(ar)), vp=v) {
     # compare arrApply() to translated r call
     vec=FALSE
     if (length(ndi) == 0) {
@@ -38,14 +47,6 @@ test_ar=function(ar, tol=1.e-14, acts=lacts, ndi=seq_along(dim(ar)), v=v) {
         }
     }
 }
-set.seed(7)
-n=3
-v=rnorm(n)
-m=matrix(rnorm(n*n), n)
-d3=rep(n, 3)
-ar3d=array(rnorm(prod(d3)), dim=d3)
-d4=rep(n, 4)
-ar4d=array(rnorm(prod(d4)), dim=d4)
 test_that("arrApply on a vector", {
     test_ar(v)
 })

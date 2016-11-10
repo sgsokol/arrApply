@@ -3,15 +3,17 @@
 
 #' High Performance Variant of apply()
 #'
-#' High performance variant of apply() for a fixed set of functions.
-#' However, a considerable speedup is a trade-off for universality.
-#' The functions that can be applied along to a given dimension of an
-#' input array, can be divided in three groups:
-#' reducing functions (like mean(), sum() etc., they produce a scalar
-#' for a given vector input), mapping functions (like normalise(), cumsum()
-#' etc., they produce a vector of the same length as an input vector)
-#' and vector reducing functions (like diff() that produce a vector of
-#' different length compared to the length of an input vector).
+#'  High performance variant of apply() for a fixed set of functions.
+#'  Considerable speedup is a trade-off for universality, user defined
+#'  functions cannot be used with arrApply. However, 20 most currently employed
+#'  functions are available for usage. They can be divided in three types:
+#'  reducing functions (like mean(), sum() etc., giving a scalar when applied to a vector),
+#'  mapping function (like normalise(), cumsum() etc., giving a vector of the same length
+#'  as the input vector) and finally, vector reducing function (like diff() which produces
+#'  result vector of a length different from the length of input vector).
+#'  Optional or mandatory additional arguments required by some functions
+#'  (e.g. norm type for norm() or normalise() functions) can be
+#'  passed as named arguments in '...'.
 #' 
 #' The following functions can be used as argument 'fun' (brackets
 #' [] indicate additional parameters that can be passed in '...'):
@@ -25,7 +27,7 @@
 #'    a vector v);
 #'  - vector reducing function: diff() [k].
 #' 
-#' RcppArmadillo is used to do the job very quickly but it commes at price
+#' RcppArmadillo is used to do the job in very fast way but it comes at price
 #' of not allowing NA in the input numeric array.
 #' Vectors are allowed at input. They are considered as arrays of dimension 1.
 #' So in this case, \code{idim} can only be 1.
@@ -69,7 +71,7 @@
 #' 
 #' @export
 arrApply <- function(arr, idim = 1L, fun = "sum", ...) {
-    dots=list(...)
+    dots = list(...)
     .Call('arrApply_arrApply', PACKAGE = 'arrApply', arr, idim, fun, dots)
 }
 

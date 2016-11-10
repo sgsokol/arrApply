@@ -7,13 +7,13 @@
 using namespace Rcpp;
 
 // arrApply
-SEXP arrApply(NumericVector arr, int idim, std::string fun, List dots);
+SEXP arrApply(NumericVector arr, unsigned int idim, std::string fun, List dots);
 RcppExport SEXP arrApply_arrApply(SEXP arrSEXP, SEXP idimSEXP, SEXP funSEXP, SEXP dotsSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< NumericVector >::type arr(arrSEXP);
-    Rcpp::traits::input_parameter< int >::type idim(idimSEXP);
+    Rcpp::traits::input_parameter< unsigned int >::type idim(idimSEXP);
     Rcpp::traits::input_parameter< std::string >::type fun(funSEXP);
     Rcpp::traits::input_parameter< List >::type dots(dotsSEXP);
     rcpp_result_gen = Rcpp::wrap(arrApply(arr, idim, fun, dots));

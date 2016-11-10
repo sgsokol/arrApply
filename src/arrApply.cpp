@@ -114,7 +114,7 @@ case a_##act: \
 //' 
 //' @export
 // [[Rcpp::export]]
-SEXP arrApply(NumericVector arr, int idim=1, std::string fun="sum", List dots=R_NilValue) {
+SEXP arrApply(NumericVector arr, unsigned int idim=1, std::string fun="sum", List dots=R_NilValue) {
     std::map<std::string, array_act> mapf;
     #define add_map(act) mapf[#act]=a_##act
     // populate the mapf
@@ -159,7 +159,7 @@ SEXP arrApply(NumericVector arr, int idim=1, std::string fun="sum", List dots=R_
     double pr;
     
     if (mapf.count(fun) == 0) {
-        sprintf(buf, "arrApply: fun='%s' is not in the list of applicable functions", fun.data());
+        sprintf(buf, "arrApply: fun='%s' is not in the list of applicable functions", fun.c_str());
         stop(buf);
     }
     // get args from dots
@@ -203,7 +203,7 @@ SEXP arrApply(NumericVector arr, int idim=1, std::string fun="sum", List dots=R_
                     break;
                 }
                 if (!p_is_int && !(pch == "-inf" || pch == "inf" || pch == "fro")) {
-                    sprintf(buf, "arrApply: optional p, when a string, must be one of '-inf', 'inf' or 'fro'. Instead, got '%s'.", pch);
+                    sprintf(buf, "arrApply: optional p, when a string, must be one of '-inf', 'inf' or 'fro'. Instead, got '%s'.", pch.c_str());
                     stop(buf);
                 } else if (p_is_int && p < 1) {
                     sprintf(buf, "arrApply: optional p, when an integer, must be >= 1. Instead, got '%d'.", p);
@@ -228,7 +228,7 @@ SEXP arrApply(NumericVector arr, int idim=1, std::string fun="sum", List dots=R_
             if (dots.containsElementNamed("v")) {
                 rowv=as<rowvec>(dots["v"]);
             } else {
-                sprintf(buf, "Parameter v is mandatory for %s() function", fun);
+                sprintf(buf, "Parameter v is mandatory for %s() function", fun.c_str());
             }
         break;
         case a_trapz:
@@ -236,6 +236,9 @@ SEXP arrApply(NumericVector arr, int idim=1, std::string fun="sum", List dots=R_
                 x=as<vec>(dots["x"]);
                 use_x=true;
             }
+        break;
+        default:
+        ;
         break;
     }
     
@@ -319,7 +322,7 @@ SEXP arrApply(NumericVector arr, int idim=1, std::string fun="sum", List dots=R_
             } else {
                 for (std::size_t isl=0; isl < work.n_slices; ++isl)
                     for (std::size_t ir=0; ir < res.n_rows; ir++)
-                        res.at(ir,isl)=norm(work.slice(isl).row(ir), pch.data());
+                        res.at(ir,isl)=norm(work.slice(isl).row(ir), pch.c_str());
             }
         break;
         case a_normalise:
@@ -369,6 +372,8 @@ SEXP arrApply(NumericVector arr, int idim=1, std::string fun="sum", List dots=R_
                     for (std::size_t isl=0; isl < work.n_slices; ++isl)
                         cres.slice(isl).each_row() -= rowv;
                 break;
+                default:
+                break;
                 }
             } else {
                 sprintf(buf, "arrApply: for multv(), length(v) (%d) must be equal to dim(arr)[idim] (%d).", rowv.size(), work.n_cols);
@@ -388,6 +393,9 @@ SEXP arrApply(NumericVector arr, int idim=1, std::string fun="sum", List dots=R_
                 for (std::size_t isl=0; isl < work.n_slices; ++isl)
                     res(span::all,isl)=trapz(work.slice(isl), 1);
             }
+        break;
+        default:
+           stop("arrApply: It cannot be but unknown action is encountered.");
         break;
     }
     // rechape back the result
