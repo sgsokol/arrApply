@@ -6,7 +6,7 @@ using namespace arma;
 using namespace Rcpp;
 
 // define integers for function names
-enum array_act { a_sum, a_prod, a_all, a_any, a_min, a_max, a_mean, a_median, a_sd, a_var, a_norm, a_trapz, a_normalise, a_cumsum, a_cumprod, a_multv, a_divv, a_addv, a_subv, a_diff };
+enum array_act { a_sum, a_prod, a_all, a_any, a_min, a_max, a_mean, a_median, a_sd, a_var, a_norm, a_trapz, a_normalise, a_cumsum, a_cumprod, a_multv, a_divv, a_addv, a_subv, a_diff, a_range };
 
 // result of a call on a vector is a real scalar
 #define make_call(act) \
@@ -63,7 +63,7 @@ case a_##act: \
 //'  - reducing functions: sum(), prod(), all(), any(), min(), max(),
 //'    mean(), median(), sd() [norm_type], var() [norm_type], norm() [p],
 //'    trapz() [x] (trapezoidal integration with respect to spacing in x,
-//'    if x is provided, otherwise unit spacing is used);
+//'    if x is provided, otherwise unit spacing is used), range();
 //'  - mapping functions: normalise() [p], cumsum(), cumprod(), multv() [v]
 //'    (multiply a given dimension by a vector v, term by term), divv() [v]
 //'    (divide by a vector v), addv() [v] (add a vector v), subv() [v] (subtract
@@ -74,6 +74,9 @@ case a_##act: \
 //' of not allowing NA in the input numeric array.
 //' Vectors are allowed at input. They are considered as arrays of dimension 1.
 //' So in this case, \code{idim} can only be 1.
+//' NB. Here, range() is different from R version of the homonym function.
+//'      In Armadillo, when applied to a vector, it returns a scalar max-min,
+//'      while in R, it return a 2-component vector (min, max).
 //' 
 //' 
 //' @param arr numeric array of arbitrary dimension
@@ -131,6 +134,7 @@ SEXP arrApply(NumericVector arr, unsigned int idim=1, std::string fun="sum", Lis
     add_map(var);
     add_map(norm);
     add_map(trapz);
+    add_map(range);
     // mapping functions
     add_map(normalise);
     add_map(cumsum);
@@ -141,7 +145,7 @@ SEXP arrApply(NumericVector arr, unsigned int idim=1, std::string fun="sum", Lis
     add_map(subv);
     // vector reducing functions
     add_map(diff);
-    
+   
     array_act aact=mapf[fun];
     std::vector<array_act> mvact={a_normalise, a_cumsum, a_cumprod, a_multv, a_divv, a_addv, a_subv, a_diff}; // mapping or vector reducing acts
     bool mv_res=std::find(mvact.begin(), mvact.end(), aact) != mvact.end();
@@ -186,7 +190,7 @@ SEXP arrApply(NumericVector arr, unsigned int idim=1, std::string fun="sum", Lis
                     break;
                     case REALSXP:
                         pr=as<double>(robj);
-                        if (abs(round(pr)-pr) < 1.e-10) {
+                        if (std::abs(round(pr)-pr) < 1.e-10) {
                             p=round(pr);
                         } else {
                             sprintf(buf, "arrApply: optional p must be integer >= 1, instead got %g.", pr);
@@ -215,7 +219,7 @@ SEXP arrApply(NumericVector arr, unsigned int idim=1, std::string fun="sum", Lis
             if (dots.containsElementNamed("k")) {
                 //get "k" in dots
                 k=as<unsigned int>(dots["k"]);
-                if (k <= 0 && norm_type != 1) {
+                if (k <= 0) {
                     sprintf(buf, "arrApply: optional k must be an integer >= 1, instead got %d.", k);
                     stop(buf);
                 }
@@ -302,6 +306,7 @@ SEXP arrApply(NumericVector arr, unsigned int idim=1, std::string fun="sum", Lis
         CASE(max);
         CASE(mean);
         CASE(median);
+        CASE(range);
         CASE_L(all);
         CASE_L(any);
         CASE_A(cumsum);

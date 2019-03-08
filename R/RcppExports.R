@@ -20,7 +20,7 @@
 #'  - reducing functions: sum(), prod(), all(), any(), min(), max(),
 #'    mean(), median(), sd() [norm_type], var() [norm_type], norm() [p],
 #'    trapz() [x] (trapezoidal integration with respect to spacing in x,
-#'    if x is provided, otherwise unit spacing is used);
+#'    if x is provided, otherwise unit spacing is used), range();
 #'  - mapping functions: normalise() [p], cumsum(), cumprod(), multv() [v]
 #'    (multiply a given dimension by a vector v, term by term), divv() [v]
 #'    (divide by a vector v), addv() [v] (add a vector v), subv() [v] (subtract
@@ -31,6 +31,9 @@
 #' of not allowing NA in the input numeric array.
 #' Vectors are allowed at input. They are considered as arrays of dimension 1.
 #' So in this case, \code{idim} can only be 1.
+#' NB. Here, range() is different from R version of the homonym function.
+#'      In Armadillo, when applied to a vector, it returns a scalar max-min,
+#'      while in R, it return a 2-component vector (min, max).
 #' 
 #' 
 #' @param arr numeric array of arbitrary dimension
@@ -72,6 +75,6 @@
 #' @export
 arrApply <- function(arr, idim = 1L, fun = "sum", ...) {
     dots = list(...)
-    .Call('arrApply_arrApply', PACKAGE = 'arrApply', arr, idim, fun, dots)
+    .Call('_arrApply_arrApply', PACKAGE = 'arrApply', arr, idim, fun, dots)
 }
 

@@ -8,7 +8,7 @@ using namespace Rcpp;
 
 // arrApply
 SEXP arrApply(NumericVector arr, unsigned int idim, std::string fun, List dots);
-RcppExport SEXP arrApply_arrApply(SEXP arrSEXP, SEXP idimSEXP, SEXP funSEXP, SEXP dotsSEXP) {
+RcppExport SEXP _arrApply_arrApply(SEXP arrSEXP, SEXP idimSEXP, SEXP funSEXP, SEXP dotsSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -19,4 +19,14 @@ BEGIN_RCPP
     rcpp_result_gen = Rcpp::wrap(arrApply(arr, idim, fun, dots));
     return rcpp_result_gen;
 END_RCPP
+}
+
+static const R_CallMethodDef CallEntries[] = {
+    {"_arrApply_arrApply", (DL_FUNC) &_arrApply_arrApply, 4},
+    {NULL, NULL, 0}
+};
+
+RcppExport void R_init_arrApply(DllInfo *dll) {
+    R_registerRoutines(dll, NULL, CallEntries, NULL, NULL);
+    R_useDynamicSymbols(dll, FALSE);
 }
