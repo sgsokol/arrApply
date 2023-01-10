@@ -1,0 +1,6 @@
+add functions:
+ - quantile
+ - polyfit (skipped)
+ - polyval (skipped)
+ - conv
+ - fft, ifft (skipped)

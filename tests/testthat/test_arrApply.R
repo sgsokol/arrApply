@@ -11,6 +11,7 @@ ar3d=array(rnorm(prod(d3)), dim=d3)
 d4=rep(n, 4)
 ar4d=array(rnorm(prod(d4)), dim=d4)
 vp=v
+p=runif(n)
 lacts=list("sum"=NULL, "prod"=NULL, "all"=NULL, "any"=NULL, "min"=NULL, "max"=NULL, "mean"=NULL, "median"=NULL, "sd"=NULL, "var"=NULL, "cumsum"=NULL, "cumprod"=NULL, "diff"=NULL,
    # translated acts
    norm=list(rf="norm", argr=list(type='2'), argc=list(p=2)),
@@ -19,7 +20,9 @@ lacts=list("sum"=NULL, "prod"=NULL, "all"=NULL, "any"=NULL, "min"=NULL, "max"=NU
    multv=list(rf=function(v, vv) v*vv, argr=list(vv=vp), argc=list(v=vp)), 
    divv=list(rf=function(v, vv) v/vv, argr=list(vv=vp), argc=list(v=vp)), 
    addv=list(rf=function(v, vv) v+vv, argr=list(vv=vp), argc=list(v=vp)), 
-   subv=list(rf=function(v, vv) v-vv, argr=list(vv=vp), argc=list(v=vp))
+   subv=list(rf=function(v, vv) v-vv, argr=list(vv=vp), argc=list(v=vp)),
+   conv=list(rf=function(v, vv) convolve(v, rev(vv), type="open"), argr=list(vv=vp), argc=list(v=vp)),
+   quantile=list(rf=function(v, vv) quantile(v, vv, type=8), argr=list(vv=p), argc=list(p=p))
 )
 test_ar=function(ar, tol=1.e-14, acts=lacts, ndi=seq_along(dim(ar)), vp=v) {
     # compare arrApply() to translated r call

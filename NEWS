@@ -1,10 +1,19 @@
+Version 2.2
+===========
+
+* 2023-01-10
+ - added functions: conv() and quantile()
+ - fixed missing error message for unknown function
+ - fixed sprintf() presence (signaled by CRAN team)
+ - help page is reformatted to be more readable
+
 Version 2.1
 ===========
 
 * 2019-03-08
  - added range() to the set of applicable functions
  - fixed abs() warning
-
+ 
 Version 2.0
 ===========
 

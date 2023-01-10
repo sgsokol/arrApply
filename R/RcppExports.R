@@ -4,28 +4,57 @@
 #' High Performance Variant of apply()
 #'
 #'  High performance variant of apply() for a fixed set of functions.
-#'  Considerable speedup is a trade-off for universality, user defined
-#'  functions cannot be used with arrApply. However, 20 most currently employed
-#'  functions are available for usage. They can be divided in three types:
-#'  reducing functions (like mean(), sum() etc., giving a scalar when applied to a vector),
-#'  mapping function (like normalise(), cumsum() etc., giving a vector of the same length
-#'  as the input vector) and finally, vector reducing function (like diff() which produces
-#'  result vector of a length different from the length of input vector).
+#'  Considerable speedup obtained by this implementation is a trade-off for universality, user defined
+#'  functions cannot be used with arrApply. However, about 20 most currently employed
+#'  functions are available for usage. They can be divided in three types: \itemize{
+#'    \item reducing functions (like mean(), sum() etc., giving a scalar when applied to a vector);
+#'    \item mapping function (like normalise(), cumsum() etc., giving a vector of the same length
+#'        as the input vector)
+#'    \item and finally, vector reducing function (like diff() which produces
+#'        result vector of a length different from the length of input vector).
+#'  }
 #'  Optional or mandatory additional arguments required by some functions
 #'  (e.g. norm type for norm() or normalise() functions) can be
 #'  passed as named arguments in '...'.
 #' 
 #' The following functions can be used as argument 'fun' (brackets
-#' [] indicate additional parameters that can be passed in '...'):
-#'  - reducing functions: sum(), prod(), all(), any(), min(), max(),
-#'    mean(), median(), sd() [norm_type], var() [norm_type], norm() [p],
-#'    trapz() [x] (trapezoidal integration with respect to spacing in x,
-#'    if x is provided, otherwise unit spacing is used), range();
-#'  - mapping functions: normalise() [p], cumsum(), cumprod(), multv() [v]
-#'    (multiply a given dimension by a vector v, term by term), divv() [v]
-#'    (divide by a vector v), addv() [v] (add a vector v), subv() [v] (subtract
-#'    a vector v);
-#'  - vector reducing function: diff() [k].
+#' [] indicate additional parameters that can be passed in '...'): \itemize{
+#'     \item reducing functions: \itemize{
+#'         \item sum()
+#'         \item prod()
+#'         \item all()
+#'         \item any()
+#'         \item min()
+#'         \item max()
+#'         \item mean()
+#'         \item median()
+#'         \item sd() [norm_type]
+#'         \item var() [norm_type]
+#'         \item norm() [p],
+#'         \item trapz() [x] (trapezoidal integration with respect to spacing in x,
+#'            if x is provided, otherwise unit spacing is used)
+#'         \item range();
+#'       }
+#'     \item mapping functions:\itemize{
+#'         \item normalise() [p]
+#'         \item cumsum()
+#'         \item cumprod()
+#'         \item multv() [v]
+#'            (multiply a given dimension by a vector v, term by term)
+#'         \item divv() [v]
+#'            (divide by a vector v)
+#'         \item addv() [v] (add a vector v)
+#'         \item subv() [v] (subtract
+#'            a vector v);
+#'         }
+#'     \item vector reducing/augmenting function:\itemize{
+#'         \item diff() [k]
+#'         \item conv() [v, shape] (convolve with vector v; shape="full" is equivalent
+#'            to R's \code{convolve(..., rev(v), type="open")}).
+#'         \item quantile() [p] (calculate quantiles corresponding to probabilities p;
+#'            equivalent to R's \code{quantile(..., probs=p, type=8)}).
+#'        }
+#'     }
 #' 
 #' RcppArmadillo is used to do the job in very fast way but it comes at price
 #' of not allowing NA in the input numeric array.
@@ -40,17 +69,20 @@
 #' @param idim integer, dimension number along which a function must be applied
 #' @param fun character string, function name to be applied
 #' @param ... additional named parameters. Optional parameters can be helpful for
-#'    the following functions:
-#'       sd(), var() [norm_type: 0 normalisation using N-1 entries (default);
+#'    the following functions:\itemize{
+#'       \item sd(), var() [norm_type: 0 normalisation using N-1 entries (default);
 #'          1 normalisation using N entries];
-#'       norm() [p: integer >= 1 (default=2) or one of "-inf", "inf", "fro".]
-#'       normalise() [p: integer >= 1, default=2]
-#'       diff() [k: integer >= 1 (default=1) number of recursive application of diff().
+#'       \item norm() [p: integer >= 1 (default=2) or one of "-inf", "inf", "fro".]
+#'       \item normalise() [p: integer >= 1, default=2]
+#'       \item diff() [k: integer >= 1 (default=1) number of recursive application of diff().
 #'          The size of idim-th dimension will be reduced by k.]
-#'       trapz() [x: numerical vector of the same length as idim-th size of arr]
-#'    Mandatory parameter:
-#'       multv(), divv(), addv(), subv() [v: numerical vector of the same
+#'       \item trapz() [x: numerical vector of the same length as idim-th size of arr]
+#'    }
+#'    Mandatory parameter:\itemize{
+#'       \item multv(), divv(), addv(), subv() [v: numerical vector of the same
 #'          length as idim-th size of arr]
+#'       \item quantile() [p: vector of probabilities in interval [0; 1]]
+#'    }
 #'
 #' @return output array of dimension cut by 1 (the idim-th dimension
 #'    will disappear for reducing functions) or of the same dimension

@@ -6,6 +6,11 @@
 
 using namespace Rcpp;
 
+#ifdef RCPP_USE_GLOBAL_ROSTREAM
+Rcpp::Rostream<true>&  Rcpp::Rcout = Rcpp::Rcpp_cout_get();
+Rcpp::Rostream<false>& Rcpp::Rcerr = Rcpp::Rcpp_cerr_get();
+#endif
+
 // arrApply
 SEXP arrApply(NumericVector arr, unsigned int idim, std::string fun, List dots);
 RcppExport SEXP _arrApply_arrApply(SEXP arrSEXP, SEXP idimSEXP, SEXP funSEXP, SEXP dotsSEXP) {
