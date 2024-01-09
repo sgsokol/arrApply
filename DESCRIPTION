@@ -22,4 +22,6 @@ LinkingTo: Rcpp, RcppArmadillo
 Suggests:
     testthat
 RoxygenNote: 7.2.1
+URL: https://github.com/sgsokol/arrApply
+BugReports: https://github.com/sgsokol/arrApply/issues
 SystemRequirements: C++11
